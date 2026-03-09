@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>像素涂色 · 移动端适配版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #2b3a4a 0%, #1d2a35 100%);
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        #home-screen {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+            width: 600px;
+            max-width: 90vw;
+            transition: all 0.3s;
+        }
+        .home-title {
+            color: white;
+            font-size: 3rem;
+            font-weight: 800;
+            text-align: center;
+            margin: 0 0 20px 0;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            letter-spacing: 4px;
+        }
+        .home-sub {
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+            margin-bottom: 40px;
+            font-style: italic;
+        }
+        .home-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        .home-btn {
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 18px 40px;
+            border-radius: 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: 0.2s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            flex: 1;
+            text-align: center;
+        }
+        .home-btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: white;
+            transform: scale(1.02);
+        }
+        #settings-modal, #confirm-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: #2d3e4f;
+            padding: 30px;
+            border-radius: 40px;
+            width: 450px;
+            max-width: 90%;
+            color: white;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            border: 1px solid #7f8c8d;
+        }
+        .modal-card h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #ffd966;
+        }
+        .setting-item {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .setting-item label {
+            font-size: 1.2rem;
+        }
+        .toggle-switch {
+            width: 60px;
+            height: 30px;
+            background: #555;
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .toggle-switch.active {
+            background: #4caf50;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: 0.2s;
+        }
+        .toggle-switch.active::after {
+            left: 32px;
+        }
+        .slider-value {
+            font-size: 14px;
+            background: #3a4a5a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-left: 10px;
+        }
+        .number-input {
+            width: 80px;
+            padding: 5px;
+            border-radius: 8px;
+            border: none;
+            background: #3a4a5a;
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .settings-close {
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .modal-btn {
+            padding: 10px 25px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+        .modal-btn.confirm {
+            background: #e67e22;
+            color: white;
+        }
+        .modal-btn.cancel {
+            background: #7f8c8d;
+            color: white;
+        }
+        #game-screen {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            background: #1e2a36;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            color: white;
+        }
+        .game-header {
+            padding: 16px 24px;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #4a5c6b;
+            flex-wrap: wrap;
+        }
+        .back-button {
+            background: #2c3e50;
+            border: 1px solid #5f7a92;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .back-button:hover {
+            background: #3a4a5a;
+        }
+        .progress-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 200px;
+        }
+        .progress-bar-bg {
+            height: 16px;
+            background: #3a4a5a;
+            border-radius: 30px;
+            flex: 1;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #6fcf97, #2ecc71);
+            border-radius: 30px;
+            transition: width 0.1s;
+        }
+        .game-toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .game-toolbar button {
+            background: #2c3e50;
+            border: none;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: 1px solid #5f7a92;
+            transition: 0.1s;
+        }
+        .game-toolbar button.active {
+            background: #e67e22;
+            border-color: #f39c12;
+        }
+        #color-palette-container {
+            padding: 12px 24px;
+            background: #233240;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-bottom: 1px solid #3a4e60;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .palette-swatch {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 3px black;
+            cursor: pointer;
+            border: 3px solid transparent;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+            transition: 0.1s;
+        }
+        .palette-swatch.selected {
+            border-color: #ffd966;
+            transform: scale(1.05);
+        }
+        .palette-swatch.completed {
+            display: none;
+        }
+        .canvas-container {
+            width: 100%;
+            height: calc(100vh - 200px);
+            overflow: auto;
+            position: relative;
+            background: #10161c;
+            cursor: crosshair;
+            touch-action: none; /* 禁止浏览器默认手势 */
+        }
+        #game-canvas {
+            display: block;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            transform-origin: 0 0;
+        }
+        .info-text {
+            font-size: 14px;
+            color: #b0c4de;
+            margin-left: 15px;
+        }
+        .ai-indicator {
+            background: #27ae60;
+            color: white;
+            border-radius: 30px;
+            padding: 4px 12px;
+            font-size: 12px;
+            margin-left: 10px;
+            display: inline-block;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+            font-size: 24px;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 主页 -->
+    <div id="home-screen">
+        <div class="home-title">PIXEL·ART</div>
+        <div class="home-sub">移动端 · 双指缩放 · 长按涂色</div>
+        <div class="home-buttons">
+            <div class="home-btn" id="import-btn">🖼️ 导入图片</div>
+            <div class="home-btn" id="home-settings-btn">⚙️ 设置</div>
+        </div>
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal">
+        <div class="modal-card">
+            <h2>⚙️ 偏好设置</h2>
+            <div class="setting-item">
+                <label>🔴 错色显示</label>
+                <div class="toggle-switch" id="toggle-mistake"></div>
+            </div>
+            <div class="setting-item">
+                <label>🖌️ 大画笔</label>
+                <div class="toggle-switch" id="toggle-bigbrush"></div>
+            </div>
+            <div class="setting-item">
+                <label>🎨 细节度 (颜色数)</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="range" id="detail-slider" min="5" max="80" value="20" style="width: 120px;">
+                    <input type="number" id="detail-input" min="5" max="80" value="20" class="number-input">
+                </div>
+            </div>
+            <div class="setting-item">
+                <label>🤖 AI增强</label>
+                <div class="toggle-switch" id="toggle-ai"></div>
+            </div>
+            <div class="setting-item">
+                <label>📐 网格尺寸</label>
+                <input type="number" id="grid-size-input" min="1" max="500" value="126" class="number-input">
+            </div>
+            <button class="settings-close" id="close-settings">完成</button>
+            <p style="font-size: 13px; opacity:0.7; text-align:center; margin-top:15px;">AI模式使用K-means聚类，自动提亮暗色；缩放时可预览原图轮廓</p>
+        </div>
+    </div>
+
+    <!-- 确认退出弹窗 -->
+    <div id="confirm-modal">
+        <div class="modal-card">
+            <h2>⚠️ 确认退出</h2>
+            <p>确定返回主页吗？当前进度将丢失。</p>
+            <div class="modal-buttons">
+                <button class="modal-btn confirm" id="confirm-exit">确认</button>
+                <button class="modal-btn cancel" id="cancel-exit">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div>正在处理图片...</div>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div id="game-screen">
+        <div class="game-header">
+            <button class="back-button" id="back-to-home">← 返回</button>
+            <div class="progress-area">
+                <span>📊 进度</span>
+                <div class="progress-bar-bg"><div class="progress-fill" id="progress-fill"></div></div>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="game-toolbar">
+                <button id="tool-normal" class="active">🖱️单格</button>
+                <button id="tool-brush">🖌️刷子</button>
+                <button id="tool-bucket">🪣油桶</button>
+                <button id="tool-magnifier">🔍放大镜</button>
+                <button id="tool-fillall">⚡一键涂完</button>
+                <button id="save-btn">💾保存</button>
+                <button id="game-settings-btn">⚙️</button>
+            </div>
+            <span class="ai-indicator" id="ai-indicator" style="display: none;">AI模式</span>
+        </div>
+        <div id="color-palette-container"></div>
+        <div class="canvas-container" id="canvas-container">
+            <canvas id="game-canvas" width="640" height="640"></canvas>
+        </div>
+        <div class="info-text">双指缩放 | 单指拖动 | 单击/长按涂色</div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- 配置 ----------
+            const MIN_BRIGHTNESS = 150; // R+G+B 最小阈值
+            const LINE_COLOR = '#888';   // 分割线颜色
+            const UNPAINTED_BG_NEAR = '#ffffff'; // 近景未涂色背景（纯白）
+            const UNPAINTED_BG_FAR = '#f0f0f0';   // 远景未涂色基础色
+            const HIGHLIGHT_COLOR = '#e0e0e0';     // 高亮灰色
+
+            // ---------- 全局状态 ----------
+            let currentSettings = {
+                mistakeOff: false,
+                bigBrush: false,
+                aiMode: false
+            };
+            let imageLoaded = false;
+            let originalGrid = [];          // 存储原始颜色索引
+            let paintedGrid = [];            // 存储当前涂色索引 (-1 未涂)
+            let mistakeGrid = [];             // 记录错涂
+            let originalBrightness = [];      // 存储原始亮度 (0-255) 用于远景预览
+            let gridWidth = 0, gridHeight = 0;
+            let cellSize = 12;                // 基础格子大小（像素）
+            let viewScale = 1.0;
+            let cellDrawSize = 12;             // 实际绘制格子大小（整数）
+            let isDragging = false;            // 鼠标右键拖动状态
+            let lastMouseX, lastMouseY;
+            let currentTool = 'normal';
+            let currentColorIndex = 0;
+            let colorPalette = [];
+            let actionLog = [];
+
+            // 触摸相关状态
+            let touchActive = false;
+            let touchStartX = 0, touchStartY = 0;
+            let touchStartTime = 0;
+            let longPressTimer = null;
+            let isLongPressing = false;
+            let isTouchMoving = false;
+            let lastTouchX = 0, lastTouchY = 0;
+            let initialPinchDistance = 0;
+
+            // DOM 元素
+            const homeScreen = document.getElementById('home-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const settingsModal = document.getElementById('settings-modal');
+            const confirmModal = document.getElementById('confirm-modal');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const fileInput = document.getElementById('file-input');
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+            const container = document.getElementById('canvas-container');
+            const paletteDiv = document.getElementById('color-palette-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressPercent = document.getElementById('progress-percent');
+            const aiIndicator = document.getElementById('ai-indicator');
+            const backButton = document.getElementById('back-to-home');
+            const confirmExit = document.getElementById('confirm-exit');
+            const cancelExit = document.getElementById('cancel-exit');
+
+            // 工具按钮
+            const toolNormal = document.getElementById('tool-normal');
+            const toolBrush = document.getElementById('tool-brush');
+            const toolBucket = document.getElementById('tool-bucket');
+            const toolMagnifier = document.getElementById('tool-magnifier');
+            const toolFillAll = document.getElementById('tool-fillall');
+
+            // 细节度控件
+            const detailSlider = document.getElementById('detail-slider');
+            const detailInput = document.getElementById('detail-input');
+            function syncDetail(value) {
+                value = Math.min(80, Math.max(5, parseInt(value) || 20));
+                detailSlider.value = value;
+                detailInput.value = value;
+            }
+            detailSlider.addEventListener('input', () => syncDetail(detailSlider.value));
+            detailInput.addEventListener('input', () => syncDetail(detailInput.value));
+            syncDetail(20);
+
+            // 自定义网格尺寸输入框
+            const gridSizeInput = document.getElementById('grid-size-input');
+
+            // ---------- 工具函数 ----------
+            function rgbToHex(r, g, b) {
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            }
+
+            function getBrightness(r, g, b) {
+                return Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+            }
+
+            // K-means++ 初始化
+            function initializeCentroids(pixels, k) {
+                const centroids = [];
+                centroids.push({...pixels[Math.floor(Math.random() * pixels.length)]});
+                for (let i = 1; i < k; i++) {
+                    const distances = new Array(pixels.length);
+                    let totalDist = 0;
+                    for (let j = 0; j < pixels.length; j++) {
+                        let minDist = Infinity;
+                        for (let c = 0; c < centroids.length; c++) {
+                            const dr = pixels[j].r - centroids[c].r;
+                            const dg = pixels[j].g - centroids[c].g;
+                            const db = pixels[j].b - centroids[c].b;
+                            const dist = dr*dr + dg*dg + db*db;
+                            if (dist < minDist) minDist = dist;
+                        }
+                        distances[j] = minDist;
+                        totalDist += minDist;
+                    }
+                    let rand = Math.random() * totalDist;
+                    let cumulative = 0;
+                    for (let j = 0; j < pixels.length; j++) {
+                        cumulative += distances[j];
+                        if (cumulative >= rand) {
+                            centroids.push({...pixels[j]});
+                            break;
+                        }
+                    }
+                }
+                return centroids;
+            }
+
+            // K-means 聚类
+            function kMeans(pixels, k, maxIterations = 30) {
+                if (pixels.length === 0) return { centroids: [], labels: [] };
+                
+                let centroids = initializeCentroids(pixels, k);
+                let labels = new Array(pixels.length).fill(0);
+                let changed = true;
+                let iter = 0;
+                
+                while (changed && iter < maxIterations) {
+                    changed = false;
+                    iter++;
+                    
+                    for (let i = 0; i < pixels.length; i++) {
+                        let minDist = Infinity;
+                        let bestIdx = 0;
+                        for (let j = 0; j < k; j++) {
+                            const dr = pixels[i].r - centroids[j].r;
+                            const dg = pixels[i].g - centroids[j].g;
+                            const db = pixels[i].b - centroids[j].b;
+                            const dist = dr*dr + dg*dg + db*db;
+                            if (dist < minDist) {
+                                minDist = dist;
+                                bestIdx = j;
+                            }
+                        }
+                        if (labels[i] !== bestIdx) {
+                            labels[i] = bestIdx;
+                            changed = true;
+                        }
+                    }
+                    
+                    const sums = new Array(k).fill(0).map(() => ({r:0, g:0, b:0, count:0}));
+                    for (let i = 0; i < pixels.length; i++) {
+                        const label = labels[i];
+                        sums[label].r += pixels[i].r;
+                        sums[label].g += pixels[i].g;
+                        sums[label].b += pixels[i].b;
+                        sums[label].count++;
+                    }
+                    
+                    for (let j = 0; j < k; j++) {
+                        if (sums[j].count > 0) {
+                            centroids[j] = {
+                                r: Math.round(sums[j].r / sums[j].count),
+                                g: Math.round(sums[j].g / sums[j].count),
+                                b: Math.round(sums[j].b / sums[j].count)
+                            };
+                        } else {
+                            centroids[j] = {...pixels[Math.floor(Math.random() * pixels.length)]};
+                        }
+                    }
+                }
+                return { centroids, labels };
+            }
+
+            // 提亮过暗颜色
+            function brightenPaletteWithCluster(pixels, labels, centroids) {
+                const k = centroids.length;
+                const clusterPixels = new Array(k).fill().map(() => []);
+                for (let i = 0; i < pixels.length; i++) {
+                    clusterPixels[labels[i]].push(pixels[i]);
+                }
+                
+                for (let j = 0; j < k; j++) {
+                    const brightness = centroids[j].r + centroids[j].g + centroids[j].b;
+                    if (brightness < MIN_BRIGHTNESS && clusterPixels[j].length > 0) {
+                        let brightest = clusterPixels[j][0];
+                        let maxBright = brightest.r + brightest.g + brightest.b;
+                        for (let p of clusterPixels[j]) {
+                            const b = p.r + p.g + p.b;
+                            if (b > maxBright) {
+                                maxBright = b;
+                                brightest = p;
+                            }
+                        }
+                        centroids[j] = {...brightest};
+                    }
+                }
+                return centroids;
+            }
+
+            // 像素化主函数
+            async function pixelateImage(imageData, width, height, targetColors, useAI) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const pixels = [];
+                        const brightnessGrid = [];
+                        for (let i = 0; i < imageData.data.length; i += 4) {
+                            const r = imageData.data[i];
+                            const g = imageData.data[i+1];
+                            const b = imageData.data[i+2];
+                            pixels.push({ r, g, b });
+                            brightnessGrid.push(getBrightness(r, g, b));
+                        }
+                        
+                        const { centroids, labels } = kMeans(pixels, targetColors);
+                        const brightCentroids = brightenPaletteWithCluster(pixels, labels, centroids);
+                        
+                        const newLabels = new Array(pixels.length);
+                        for (let i = 0; i < pixels.length; i++) {
+                            let bestIdx = 0;
+                            let bestDist = Infinity;
+                            for (let j = 0; j < brightCentroids.length; j++) {
+                                const dr = pixels[i].r - brightCentroids[j].r;
+                                const dg = pixels[i].g - brightCentroids[j].g;
+                                const db = pixels[i].b - brightCentroids[j].b;
+                                const dist = dr*dr + dg*dg + db*db;
+                                if (dist < bestDist) {
+                                    bestDist = dist;
+                                    bestIdx = j;
+                                }
+                            }
+                            newLabels[i] = bestIdx;
+                        }
+                        
+                        const grid = [];
+                        const brightGrid = [];
+                        let idx = 0;
+                        for (let y = 0; y < height; y++) {
+                            const row = [];
+                            const brightRow = [];
+                            for (let x = 0; x < width; x++) {
+                                row.push(newLabels[idx]);
+                                brightRow.push(brightnessGrid[idx]);
+                                idx++;
+                            }
+                            grid.push(row);
+                            brightGrid.push(brightRow);
+                        }
+                        
+                        const palette = brightCentroids.map(c => ({
+                            ...c,
+                            hex: rgbToHex(c.r, c.g, c.b)
+                        }));
+                        
+                        console.log('最终调色板:', palette.map(c => c.hex));
+                        
+                        resolve({ grid, palette, brightnessGrid: brightGrid });
+                    }, 500);
+                });
+            }
+
+            // 构建调色板UI
+            function buildPaletteFromColors(colors) {
+                if (!colors || colors.length === 0) return;
+                paletteDiv.innerHTML = '';
+                colors.forEach((color, idx) => {
+                    const swatch = document.createElement('div');
+                    swatch.className = 'palette-swatch';
+                    swatch.style.backgroundColor = color.hex;
+                    swatch.innerHTML = `${idx+1}<span style="font-size:8px;">#</span>`;
+                    swatch.dataset.index = idx;
+                    swatch.addEventListener('click', () => {
+                        if (swatch.classList.contains('completed')) return;
+                        document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('selected'));
+                        swatch.classList.add('selected');
+                        currentColorIndex = idx;
+                        drawGrid();
+                    });
+                    paletteDiv.appendChild(swatch);
+                });
+                if (paletteDiv.children.length > 0) paletteDiv.children[0].classList.add('selected');
+                currentColorIndex = 0;
+            }
+
+            // 更新已完成颜色
+            function updateCompletedColors() {
+                if (!colorPalette.length) return;
+                const remaining = new Array(colorPalette.length).fill(0);
+                for (let y = 0; y < gridHeight; y++) {
+                    for (let x = 0; x < gridWidth; x++) {
+                        if (paintedGrid[y][x] === -1) {
+                            remaining[originalGrid[y][x]]++;
+                        }
+                    }
+                }
+                document.querySelectorAll('.palette-swatch').forEach(swatch => {
+                    const idx = parseInt(swatch.dataset.index);
+                    if (remaining[idx] === 0) {
+                        swatch.classList.add('completed');
+                        if (idx === currentColorIndex) {
+                            const firstRemaining = remaining.findIndex(count => count > 0);
+                            if (firstRemaining !== -1) {
+                                currentColorIndex = firstRemaining;
+                                document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('selected'));
+                                document.querySelector(`.palette-swatch[data-index="${firstRemaining}"]`).classList.add('selected');
+                            } else {
+                                currentColorIndex = -1;
+                            }
+                        }
+                    } else {
+                        swatch.classList.remove('completed');
+                    }
+                });
+            }
+
+            // 绘制网格
+            function drawGrid() {
+                if (!imageLoaded) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const showNumbers = cellDrawSize >= 8;
+                const showLines = cellDrawSize >= 4;
+                
+                for (let y = 0; y < gridHeight; y++) {
+                    for (let x = 0; x < gridWidth; x++) {
+                        const origIdx = originalGrid[y][x];
+                        const paintedIdx = paintedGrid[y][x];
+                        const isMistake = mistakeGrid[y][x];
+                        const brightness = originalBrightness[y][x];
+
+                        if (origIdx < 0 || origIdx >= colorPalette.length) {
+                            console.error(`原始索引越界: (${x},${y}) origIdx=${origIdx}`);
+                            ctx.fillStyle = '#ff00ff';
+                            ctx.fillRect(x * cellDrawSize, y * cellDrawSize, cellDrawSize, cellDrawSize);
+                            continue;
+                        }
+
+                        let fillColor;
+                        if (paintedIdx !== -1) {
+                            if (paintedIdx < 0 || paintedIdx >= colorPalette.length) {
+                                console.error(`涂色索引越界: (${x},${y}) paintedIdx=${paintedIdx}`);
+                                ctx.fillStyle = '#ff00ff';
+                                ctx.fillRect(x * cellDrawSize, y * cellDrawSize, cellDrawSize, cellDrawSize);
+                                continue;
+                            }
+                            fillColor = colorPalette[paintedIdx].hex;
+                        } else {
+                            if (showNumbers && viewScale >= 0.8) {
+                                fillColor = UNPAINTED_BG_NEAR;
+                            } else {
+                                const gray = Math.floor(brightness * 0.8 + 50);
+                                fillColor = `rgb(${gray}, ${gray}, ${gray})`;
+                            }
+                            if (currentColorIndex !== -1 && origIdx === currentColorIndex) {
+                                fillColor = HIGHLIGHT_COLOR;
+                            }
+                        }
+
+                        ctx.fillStyle = fillColor;
+                        ctx.fillRect(x * cellDrawSize, y * cellDrawSize, cellDrawSize, cellDrawSize);
+
+                        if (showLines) {
+                            ctx.strokeStyle = LINE_COLOR;
+                            ctx.lineWidth = 1;
+                            
+                            if (x < gridWidth - 1) {
+                                const rightPainted = paintedGrid[y][x+1] !== -1;
+                                const leftPainted = paintedIdx !== -1;
+                                if (!(leftPainted && rightPainted)) {
+                                    ctx.beginPath();
+                                    ctx.moveTo((x+1) * cellDrawSize - 0.5, y * cellDrawSize);
+                                    ctx.lineTo((x+1) * cellDrawSize - 0.5, (y+1) * cellDrawSize);
+                                    ctx.stroke();
+                                }
+                            }
+                            
+                            if (y < gridHeight - 1) {
+                                const downPainted = paintedGrid[y+1][x] !== -1;
+                                const upPainted = paintedIdx !== -1;
+                                if (!(upPainted && downPainted)) {
+                                    ctx.beginPath();
+                                    ctx.moveTo(x * cellDrawSize, (y+1) * cellDrawSize - 0.5);
+                                    ctx.lineTo((x+1) * cellDrawSize, (y+1) * cellDrawSize - 0.5);
+                                    ctx.stroke();
+                                }
+                            }
+                        }
+
+                        if (paintedIdx === -1 && showNumbers) {
+                            ctx.font = `${Math.max(6, cellDrawSize*0.4)}px monospace`;
+                            ctx.fillStyle = '#000000';
+                            ctx.fillText(origIdx+1, x * cellDrawSize + 2, y * cellDrawSize + cellDrawSize*0.6);
+                        }
+                    }
+                }
+                updateProgress();
+            }
+
+            // 进度条
+            function updateProgress() {
+                let total = gridWidth * gridHeight;
+                let colored = 0;
+                for (let y = 0; y < gridHeight; y++) {
+                    for (let x = 0; x < gridWidth; x++) {
+                        if (paintedGrid[y][x] !== -1) colored++;
+                    }
+                }
+                const percent = total ? Math.round(colored/total * 100) : 0;
+                progressFill.style.width = percent + '%';
+                progressPercent.innerText = percent + '%';
+            }
+
+            // 更新画布尺寸
+            function applyScale() {
+                const rawSize = cellSize * viewScale;
+                cellDrawSize = Math.max(1, Math.floor(rawSize));
+                canvas.width = gridWidth * cellDrawSize;
+                canvas.height = gridHeight * cellDrawSize;
+                canvas.style.width = canvas.width + 'px';
+                canvas.style.height = canvas.height + 'px';
+                drawGrid();
+            }
+
+            // 平滑缩放（用于双指）
+            function handlePinchZoom(centerX, centerY, scaleDelta) {
+                const oldScale = viewScale;
+                viewScale = Math.min(4, Math.max(0.3, viewScale * scaleDelta));
+                const rect = canvas.getBoundingClientRect();
+                const canvasX = (centerX - rect.left) * (canvas.width / rect.width);
+                const canvasY = (centerY - rect.top) * (canvas.height / rect.height);
+                const ratio = viewScale / oldScale;
+                container.scrollLeft += canvasX * (ratio - 1);
+                container.scrollTop += canvasY * (ratio - 1);
+                applyScale();
+            }
+
+            // ---------- 涂色核心 ----------
+            function tryPaint(x, y) {
+                if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) return false;
+                const orig = originalGrid[y][x];
+                if (paintedGrid[y][x] !== -1) return false;
+
+                if (currentColorIndex < 0 || currentColorIndex >= colorPalette.length) {
+                    console.warn('当前颜色索引无效:', currentColorIndex);
+                    return false;
+                }
+
+                if (currentColorIndex === orig) {
+                    paintedGrid[y][x] = currentColorIndex;
+                    mistakeGrid[y][x] = false;
+                    actionLog.push({ type: 'paint', x, y, color: currentColorIndex, correct: true });
+                } else {
+                    if (currentSettings.mistakeOff) {
+                        return false;
+                    } else {
+                        mistakeGrid[y][x] = true;
+                        actionLog.push({ type: 'paint', x, y, color: currentColorIndex, correct: false });
+                    }
+                }
+                return true;
+            }
+
+            // 普通单格工具
+            function normalTool(x, y) {
+                tryPaint(x, y);
+                drawGrid();
+                updateCompletedColors();
+            }
+
+            // 刷子工具
+            function brushTool(centerX, centerY) {
+                const targetOrig = originalGrid[centerY][centerX];
+                for (let y = 0; y < gridHeight; y++) {
+                    for (let x = 0; x < gridWidth; x++) {
+                        if (originalGrid[y][x] === targetOrig) {
+                            if (currentSettings.bigBrush) {
+                                for (let dy = -1; dy <= 1; dy++) {
+                                    for (let dx = -1; dx <= 1; dx++) {
+                                        const nx = x + dx, ny = y + dy;
+                                        if (nx>=0 && nx<gridWidth && ny>=0 && ny<gridHeight && originalGrid[ny][nx] === targetOrig) {
+                                            tryPaint(nx, ny);
+                                        }
+                                    }
+                                }
+                            } else {
+                                tryPaint(x, y);
+                            }
+                        }
+                    }
+                }
+                drawGrid();
+                updateCompletedColors();
+            }
+
+            // 油桶
+            function bucketTool(startX, startY) {
+                const targetOrig = originalGrid[startY][startX];
+                const queue = [{x: startX, y: startY}];
+                const visited = new Set();
+                while (queue.length) {
+                    const {x, y} = queue.shift();
+                    const key = `${x},${y}`;
+                    if (visited.has(key)) continue;
+                    visited.add(key);
+                    if (originalGrid[y][x] === targetOrig) {
+                        if (currentSettings.bigBrush) {
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    const nx = x + dx, ny = y + dy;
+                                    if (nx>=0 && nx<gridWidth && ny>=0 && ny<gridHeight && originalGrid[ny][nx] === targetOrig) {
+                                        tryPaint(nx, ny);
+                                    }
+                                }
+                            }
+                        } else {
+                            tryPaint(x, y);
+                        }
+                        if (y > 0) queue.push({x, y: y-1});
+                        if (y < gridHeight-1) queue.push({x, y: y+1});
+                        if (x > 0) queue.push({x: x-1, y});
+                        if (x < gridWidth-1) queue.push({x: x+1, y});
+                    }
+                }
+                drawGrid();
+                updateCompletedColors();
+            }
+
+            // 放大镜
+            function magnifierTool() {
+                const candidates = [];
+                for (let y = 0; y < gridHeight; y++) {
+                    for (let x = 0; x < gridWidth; x++) {
+                        if (originalGrid[y][x] === currentColorIndex && paintedGrid[y][x] === -1) {
+                            candidates.push({x, y});
+                        }
+                    }
+                }
+                if (candidates.length === 0) {
+                    alert('当前颜色已全部涂完！');
+                    return;
+                }
+                const {x, y} = candidates[Math.floor(Math.random() * candidates.length)];
+                ctx.save();
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(x * cellDrawSize - 2, y * cellDrawSize - 2, cellDrawSize + 4, cellDrawSize + 4);
+                ctx.restore();
+                const containerRect = container.getBoundingClientRect();
+                const scrollX = x * cellDrawSize - containerRect.width/2;
+                const scrollY = y * cellDrawSize - containerRect.height/2;
+                container.scrollTo({left: scrollX, top: scrollY, behavior: 'smooth'});
+                setTimeout(() => drawGrid(), 1500);
+            }
+
+            // 一键涂完
+            function fillAll() {
+                for (let y = 0; y < gridHeight; y++) {
+                    for (let x = 0; x < gridWidth; x++) {
+                        if (paintedGrid[y][x] === -1) {
+                            paintedGrid[y][x] = originalGrid[y][x];
+                            mistakeGrid[y][x] = false;
+                        }
+                    }
+                }
+                drawGrid();
+                updateCompletedColors();
+                actionLog.push({ type: 'fillall' });
+            }
+
+            // 保存图片
+            function saveImage() {
+                const link = document.createElement('a');
+                link.download = `pixel_art_${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+
+            // 返回主页
+            function goBackToHome() {
+                confirmModal.style.display = 'none';
+                imageLoaded = false;
+                originalGrid = [];
+                paintedGrid = [];
+                mistakeGrid = [];
+                originalBrightness = [];
+                colorPalette = [];
+                paletteDiv.innerHTML = '';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                gameScreen.style.display = 'none';
+                homeScreen.style.display = 'block';
+            }
+
+            // ---------- 设置开关 ----------
+            const toggleMistake = document.getElementById('toggle-mistake');
+            const toggleBigbrush = document.getElementById('toggle-bigbrush');
+            const toggleAI = document.getElementById('toggle-ai');
+            
+            function updateToggleUI() {
+                toggleMistake.classList.toggle('active', currentSettings.mistakeOff);
+                toggleBigbrush.classList.toggle('active', currentSettings.bigBrush);
+                toggleAI.classList.toggle('active', currentSettings.aiMode);
+                aiIndicator.style.display = currentSettings.aiMode ? 'inline-block' : 'none';
+            }
+            
+            toggleMistake.addEventListener('click', () => {
+                currentSettings.mistakeOff = !currentSettings.mistakeOff;
+                updateToggleUI();
+                if (imageLoaded) drawGrid();
+            });
+            toggleBigbrush.addEventListener('click', () => {
+                currentSettings.bigBrush = !currentSettings.bigBrush;
+                updateToggleUI();
+            });
+            toggleAI.addEventListener('click', () => {
+                currentSettings.aiMode = !currentSettings.aiMode;
+                updateToggleUI();
+            });
+            updateToggleUI();
+
+            // 打开/关闭设置
+            document.getElementById('home-settings-btn').addEventListener('click', () => {
+                settingsModal.style.display = 'flex';
+            });
+            document.getElementById('game-settings-btn').addEventListener('click', () => {
+                settingsModal.style.display = 'flex';
+            });
+            document.getElementById('close-settings').addEventListener('click', () => {
+                settingsModal.style.display = 'none';
+                if (imageLoaded) drawGrid();
+            });
+
+            // 返回按钮
+            backButton.addEventListener('click', () => {
+                if (imageLoaded) {
+                    confirmModal.style.display = 'flex';
+                } else {
+                    gameScreen.style.display = 'none';
+                    homeScreen.style.display = 'block';
+                }
+            });
+
+            confirmExit.addEventListener('click', goBackToHome);
+            cancelExit.addEventListener('click', () => {
+                confirmModal.style.display = 'none';
+            });
+            confirmModal.addEventListener('click', (e) => {
+                if (e.target === confirmModal) {
+                    confirmModal.style.display = 'none';
+                }
+            });
+
+            // ---------- 图片导入 ----------
+            document.getElementById('import-btn').addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const img = new Image();
+                    img.onload = async () => {
+                        let gridBase = parseInt(gridSizeInput.value);
+                        if (isNaN(gridBase) || gridBase < 1) gridBase = 126;
+
+                        let gridW, gridH;
+                        const aspect = img.width / img.height;
+                        
+                        if (Math.abs(aspect - 1) < 0.1) {
+                            gridW = gridH = gridBase;
+                        } else if (img.width > img.height) {
+                            gridH = gridBase;
+                            gridW = Math.round(gridBase * aspect);
+                        } else {
+                            gridW = gridBase;
+                            gridH = Math.round(gridBase / aspect);
+                        }
+                        gridWidth = gridW; gridHeight = gridH;
+
+                        const offCanvas = document.createElement('canvas');
+                        offCanvas.width = gridW;
+                        offCanvas.height = gridH;
+                        const offCtx = offCanvas.getContext('2d');
+                        offCtx.drawImage(img, 0, 0, gridW, gridH);
+                        const imageData = offCtx.getImageData(0, 0, gridW, gridH);
+
+                        let targetColors = parseInt(detailInput.value);
+                        targetColors = Math.min(80, Math.max(5, targetColors));
+
+                        try {
+                            loadingOverlay.style.display = 'flex';
+                            
+                            const result = await pixelateImage(imageData, gridW, gridH, targetColors, currentSettings.aiMode);
+                            originalGrid = result.grid;
+                            colorPalette = result.palette;
+                            originalBrightness = result.brightnessGrid;
+
+                            buildPaletteFromColors(colorPalette);
+
+                            paintedGrid = originalGrid.map(row => row.map(() => -1));
+                            mistakeGrid = originalGrid.map(row => row.map(() => false));
+                            actionLog = [];
+                            imageLoaded = true;
+
+                            viewScale = 1.0;
+                            cellSize = 12;
+                            applyScale();
+                            updateCompletedColors();
+
+                            loadingOverlay.style.display = 'none';
+                            homeScreen.style.display = 'none';
+                            gameScreen.style.display = 'block';
+                        } catch (error) {
+                            console.error('处理失败:', error);
+                            alert('图片处理失败，请重试');
+                            loadingOverlay.style.display = 'none';
+                        }
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // ---------- 鼠标事件（保留PC支持） ----------
+            function getGridCoordFromEvent(clientX, clientY) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const mouseX = (clientX - rect.left) * scaleX;
+                const mouseY = (clientY - rect.top) * scaleY;
+                const gridX = Math.floor(mouseX / cellDrawSize);
+                const gridY = Math.floor(mouseY / cellDrawSize);
+                if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+                    return { x: gridX, y: gridY };
+                }
+                return null;
+            }
+
+            let isPainting = false;
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    const pos = getGridCoordFromEvent(e.clientX, e.clientY);
+                    if (!pos) return;
+                    if (currentTool === 'normal') normalTool(pos.x, pos.y);
+                    else if (currentTool === 'brush') brushTool(pos.x, pos.y);
+                    else if (currentTool === 'bucket') bucketTool(pos.x, pos.y);
+                    else if (currentTool === 'magnifier') magnifierTool();
+                    else if (currentTool === 'fillall') fillAll();
+                    isPainting = true;
+                } else if (e.button === 2) {
+                    e.preventDefault();
+                    isDragging = true;
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const dx = e.clientX - lastMouseX;
+                    const dy = e.clientY - lastMouseY;
+                    container.scrollBy(-dx, -dy);
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                }
+                if (isPainting && (currentTool === 'normal' || currentTool === 'brush' || currentTool === 'bucket')) {
+                    const pos = getGridCoordFromEvent(e.clientX, e.clientY);
+                    if (pos) {
+                        if (currentTool === 'normal') normalTool(pos.x, pos.y);
+                        else if (currentTool === 'brush') brushTool(pos.x, pos.y);
+                        else if (currentTool === 'bucket') bucketTool(pos.x, pos.y);
+                    }
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                isPainting = false;
+            });
+
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const rect = canvas.getBoundingClientRect();
+                const canvasX = (e.clientX - rect.left) * (canvas.width / rect.width);
+                const canvasY = (e.clientY - rect.top) * (canvas.height / rect.height);
+                const oldScale = viewScale;
+                viewScale = Math.min(4, Math.max(0.3, viewScale * delta));
+                const ratio = viewScale / oldScale;
+                container.scrollLeft += canvasX * (ratio - 1);
+                container.scrollTop += canvasY * (ratio - 1);
+                applyScale();
+            });
+
+            // ---------- 触摸事件（移动端） ----------
+            function getTouchGridCoord(touch) {
+                return getGridCoordFromEvent(touch.clientX, touch.clientY);
+            }
+
+            function handleTouchStart(e) {
+                e.preventDefault();
+                const touches = e.touches;
+                if (touches.length === 1) {
+                    // 单指：开始计时长按
+                    const touch = touches[0];
+                    touchStartX = touch.clientX;
+                    touchStartY = touch.clientY;
+                    lastTouchX = touch.clientX;
+                    lastTouchY = touch.clientY;
+                    touchStartTime = Date.now();
+                    touchActive = true;
+                    isTouchMoving = false;
+                    isLongPressing = false;
+
+                    if (longPressTimer) clearTimeout(longPressTimer);
+                    longPressTimer = setTimeout(() => {
+                        if (touchActive && !isTouchMoving) {
+                            // 触发长按涂色模式
+                            isLongPressing = true;
+                            const pos = getTouchGridCoord(touch);
+                            if (pos) {
+                                if (currentTool === 'normal') normalTool(pos.x, pos.y);
+                                else if (currentTool === 'brush') brushTool(pos.x, pos.y);
+                                else if (currentTool === 'bucket') bucketTool(pos.x, pos.y);
+                            }
+                        }
+                    }, 300);
+                } else if (touches.length === 2) {
+                    // 双指：准备缩放
+                    const dx = touches[0].clientX - touches[1].clientX;
+                    const dy = touches[0].clientY - touches[1].clientY;
+                    initialPinchDistance = Math.sqrt(dx*dx + dy*dy);
+                    // 取消单指相关状态
+                    if (longPressTimer) clearTimeout(longPressTimer);
+                    touchActive = false;
+                    isLongPressing = false;
+                }
+            }
+
+            function handleTouchMove(e) {
+                e.preventDefault();
+                const touches = e.touches;
+                if (touches.length === 1 && touchActive) {
+                    const touch = touches[0];
+                    const dx = touch.clientX - lastTouchX;
+                    const dy = touch.clientY - lastTouchY;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist > 5) {
+                        isTouchMoving = true;
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                        }
+                        // 移动画布
+                        container.scrollBy(-dx, -dy);
+                        lastTouchX = touch.clientX;
+                        lastTouchY = touch.clientY;
+                    }
+
+                    // 如果处于长按涂色模式，移动时连续涂色
+                    if (isLongPressing) {
+                        const pos = getTouchGridCoord(touch);
+                        if (pos) {
+                            if (currentTool === 'normal') normalTool(pos.x, pos.y);
+                            else if (currentTool === 'brush') brushTool(pos.x, pos.y);
+                            else if (currentTool === 'bucket') bucketTool(pos.x, pos.y);
+                        }
+                    }
+                } else if (touches.length === 2) {
+                    // 双指缩放
+                    const dx = touches[0].clientX - touches[1].clientX;
+                    const dy = touches[0].clientY - touches[1].clientY;
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    if (initialPinchDistance > 0) {
+                        const scale = distance / initialPinchDistance;
+                        // 取两指中点
+                        const centerX = (touches[0].clientX + touches[1].clientX) / 2;
+                        const centerY = (touches[0].clientY + touches[1].clientY) / 2;
+                        handlePinchZoom(centerX, centerY, scale);
+                        initialPinchDistance = distance; // 增量式缩放
+                    }
+                }
+            }
+
+            function handleTouchEnd(e) {
+                e.preventDefault();
+                const touches = e.touches;
+                if (touches.length === 0) {
+                    // 所有手指抬起
+                    if (touchActive && !isTouchMoving && !isLongPressing && longPressTimer) {
+                        // 没有移动且没有触发长按，视为单击涂色
+                        clearTimeout(longPressTimer);
+                        const touch = e.changedTouches[0];
+                        const pos = getTouchGridCoord(touch);
+                        if (pos) {
+                            if (currentTool === 'normal') normalTool(pos.x, pos.y);
+                            else if (currentTool === 'brush') brushTool(pos.x, pos.y);
+                            else if (currentTool === 'bucket') bucketTool(pos.x, pos.y);
+                        }
+                    }
+                    touchActive = false;
+                    isLongPressing = false;
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+                } else if (touches.length === 1) {
+                    // 从双指变为单指，重新初始化单指状态
+                    touchActive = true;
+                    isTouchMoving = false;
+                    isLongPressing = false;
+                    const touch = touches[0];
+                    lastTouchX = touch.clientX;
+                    lastTouchY = touch.clientY;
+                    touchStartTime = Date.now();
+                }
+                initialPinchDistance = 0;
+            }
+
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', handleTouchEnd);
+            canvas.addEventListener('touchcancel', handleTouchEnd);
+
+            // 工具切换
+            toolNormal.addEventListener('click', function() {
+                document.querySelectorAll('.game-toolbar button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTool = 'normal';
+            });
+            toolBrush.addEventListener('click', function() {
+                document.querySelectorAll('.game-toolbar button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTool = 'brush';
+            });
+            toolBucket.addEventListener('click', function() {
+                document.querySelectorAll('.game-toolbar button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTool = 'bucket';
+            });
+            toolMagnifier.addEventListener('click', function() {
+                document.querySelectorAll('.game-toolbar button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTool = 'magnifier';
+                if (imageLoaded) magnifierTool();
+            });
+            toolFillAll.addEventListener('click', function() {
+                document.querySelectorAll('.game-toolbar button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTool = 'fillall';
+            });
+
+            document.getElementById('save-btn').addEventListener('click', saveImage);
+
+            window.showLog = () => console.table(actionLog);
+        })();
+    </script>
+</body>
+</html>
