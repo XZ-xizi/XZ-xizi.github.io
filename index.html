@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
-    <title>像素化 · 涂色游戏同款 · 最终版</title>
+    <title>像素化工坊 · 源自涂色游戏 · 高清保存</title>
     <style>
         * {
             box-sizing: border-box;
@@ -83,8 +83,8 @@
             display: block;
             max-width: 100%;
             max-height: 50vh;
-            image-rendering: crisp-edges;
             image-rendering: pixelated;
+            image-rendering: crisp-edges;
             background: #fff;
             object-fit: contain;
         }
@@ -195,7 +195,7 @@
             margin-top: 5px;
             text-align: center;
         }
-        /* 图片放大预览弹窗 */
+        /* 图片放大预览弹窗（可拖拽） */
         .modal {
             display: none;
             position: fixed;
@@ -205,28 +205,29 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.9);
-            overflow: auto;
-            touch-action: pan-x pan-y;
+            overflow: hidden;
+            touch-action: none;
         }
         .modal-content {
-            margin: auto;
-            display: block;
             width: 100%;
             height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
+            cursor: grab;
+        }
+        .modal-content:active {
+            cursor: grabbing;
         }
         #modal-image {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            transform-origin: 0 0;
+            transition: none;
+            will-change: transform;
+            pointer-events: none;
             max-width: none;
             max-height: none;
-            width: auto;
-            height: auto;
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
-            transform-origin: 0 0;
-            cursor: zoom-in;
-            transition: transform 0.1s ease;
         }
         .close-modal {
             position: absolute;
@@ -266,7 +267,7 @@
 <body>
     <div class="container">
         <h1>🎨 像素化工坊</h1>
-        <div class="sub">涂色游戏同款算法 · 随机初始化 · 可多次生成</div>
+        <div class="sub">源自涂色游戏 · 原汁原味 · 高清保存</div>
 
         <!-- 上传区域 -->
         <div class="upload-area" id="upload-area">
@@ -280,7 +281,7 @@
             <div class="canvas-wrapper" id="canvas-wrapper" title="点击放大预览">
                 <canvas id="result-canvas"></canvas>
             </div>
-            <div class="hint">点击图片全屏预览，滚轮/双指缩放 | 可多次生成直到满意</div>
+            <div class="hint">点击图片进入预览，可拖拽查看各个角落</div>
         </div>
 
         <!-- 控制区 -->
@@ -300,39 +301,44 @@
             </div>
             <div class="button-group">
                 <button id="generate-btn" disabled>⚡ 生成</button>
-                <button id="save-btn" class="secondary" disabled>💾 保存图片</button>
+                <button id="save-btn" class="secondary" disabled>💾 保存高清图</button>
             </div>
             <div class="status" id="status">请上传图片</div>
-            <div class="save-info">每次生成可能略有不同，可多次尝试</div>
+            <div class="save-info">保存为12倍放大版，每个格子12像素，清晰锐利</div>
         </div>
     </div>
 
-    <!-- 图片放大预览弹窗 -->
+    <!-- 图片放大预览弹窗（可拖拽缩放） -->
     <div id="image-modal" class="modal">
         <span class="close-modal">&times;</span>
         <div class="modal-content" id="modal-content">
             <img id="modal-image" src="" alt="放大预览">
         </div>
-        <div class="zoom-hint">滚轮缩放 | 双指缩放</div>
+        <div class="zoom-hint">滚轮缩放 | 拖拽移动</div>
     </div>
 
     <script>
         (function() {
             // ---------- 配置 ----------
             const MIN_BRIGHTNESS = 150; // 涂色游戏用的提亮阈值
-            const CELL_SIZE = 12;        // 格子大小（像素），与涂色游戏一致
+            const SAVE_CELL_SIZE = 12;    // 保存时每个格子的大小（像素）
+            const PREVIEW_CELL_SIZE = 1;   // 预览时每个格子大小（通过CSS缩放，实际画布像素）
 
             // ---------- 状态 ----------
             let originalImage = null;
-            let pixelatedGrid = null;
+            let pixelatedGrid = null; // { grid, palette, width, height }
             let isProcessing = false;
             let aiMode = false;
 
-            // 模态框缩放相关
+            // 模态框状态
             let modalImage = document.getElementById('modal-image');
             let modal = document.getElementById('image-modal');
             let modalContent = document.getElementById('modal-content');
-            let currentScale = 1;
+            let scale = 1;
+            let translateX = 0;
+            let translateY = 0;
+            let isDragging = false;
+            let startX, startY;
 
             // DOM 元素
             const uploadArea = document.getElementById('upload-area');
@@ -356,13 +362,113 @@
             });
             toggleAI.classList.toggle('active', aiMode);
 
-            // ---------- 点击画布打开弹窗 ----------
+            // ---------- 模态框拖拽缩放逻辑 ----------
+            function updateModalTransform() {
+                modalImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            }
+
+            modalContent.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                modalContent.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateModalTransform();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                modalContent.style.cursor = 'grab';
+            });
+
+            // 触摸事件
+            modalContent.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    startX = e.touches[0].clientX - translateX;
+                    startY = e.touches[0].clientY - translateY;
+                    modalContent.style.cursor = 'grabbing';
+                    e.preventDefault();
+                }
+            });
+            modalContent.addEventListener('touchmove', (e) => {
+                if (!isDragging || e.touches.length !== 1) return;
+                translateX = e.touches[0].clientX - startX;
+                translateY = e.touches[0].clientY - startY;
+                updateModalTransform();
+                e.preventDefault();
+            });
+            modalContent.addEventListener('touchend', () => {
+                isDragging = false;
+                modalContent.style.cursor = 'grab';
+            });
+
+            // 滚轮缩放
+            modal.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = modalImage.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(5, Math.max(0.5, scale * delta));
+                const scaleRatio = newScale / scale;
+                translateX -= (mouseX - translateX) * (scaleRatio - 1);
+                translateY -= (mouseY - translateY) * (scaleRatio - 1);
+                scale = newScale;
+                updateModalTransform();
+            });
+
+            // 双指缩放
+            let initialPinchDistance = null;
+            modal.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialPinchDistance = Math.sqrt(dx*dx + dy*dy);
+                }
+            });
+            modal.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDistance) {
+                    e.preventDefault();
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    const pinchScale = distance / initialPinchDistance;
+                    const newScale = Math.min(5, Math.max(0.5, scale * pinchScale));
+                    const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                    const rect = modalImage.getBoundingClientRect();
+                    const mouseX = centerX - rect.left;
+                    const mouseY = centerY - rect.top;
+                    const scaleRatio = newScale / scale;
+                    translateX -= (mouseX - translateX) * (scaleRatio - 1);
+                    translateY -= (mouseY - translateY) * (scaleRatio - 1);
+                    scale = newScale;
+                    updateModalTransform();
+                    initialPinchDistance = distance;
+                }
+            });
+            modal.addEventListener('touchend', () => {
+                initialPinchDistance = null;
+            });
+
+            // 点击画布打开弹窗
             canvasWrapper.addEventListener('click', () => {
                 if (pixelatedGrid) {
+                    // 弹窗中显示的是预览画布的内容，也是1像素/格，但通过CSS放大，清晰度足够
                     modalImage.src = resultCanvas.toDataURL('image/png');
                     modal.style.display = 'block';
-                    currentScale = 1;
-                    modalImage.style.transform = `scale(${currentScale})`;
+                    scale = 1;
+                    translateX = 0;
+                    translateY = 0;
+                    updateModalTransform();
                 }
             });
 
@@ -375,45 +481,12 @@
                 }
             });
 
-            // 模态框内滚轮缩放
-            modal.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                currentScale = Math.min(5, Math.max(0.5, currentScale * delta));
-                modalImage.style.transform = `scale(${currentScale})`;
-            });
-
-            // 移动端双指缩放
-            let initialDistance = null;
-            modal.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    const dx = e.touches[0].clientX - e.touches[1].clientX;
-                    const dy = e.touches[0].clientY - e.touches[1].clientY;
-                    initialDistance = Math.sqrt(dx*dx + dy*dy);
-                }
-            });
-            modal.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2 && initialDistance) {
-                    e.preventDefault();
-                    const dx = e.touches[0].clientX - e.touches[1].clientX;
-                    const dy = e.touches[0].clientY - e.touches[1].clientY;
-                    const distance = Math.sqrt(dx*dx + dy*dy);
-                    const scale = distance / initialDistance;
-                    currentScale = Math.min(5, Math.max(0.5, currentScale * scale));
-                    modalImage.style.transform = `scale(${currentScale})`;
-                    initialDistance = distance;
-                }
-            });
-            modal.addEventListener('touchend', () => {
-                initialDistance = null;
-            });
-
             // ---------- 工具函数 ----------
             function rgbToHex(r, g, b) {
                 return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
             }
 
-            // K-means++ 初始化
+            // K-means++ 初始化（与原作一致）
             function initializeCentroids(pixels, k) {
                 const centroids = [];
                 centroids.push({...pixels[Math.floor(Math.random() * pixels.length)]});
@@ -501,7 +574,7 @@
                 return { centroids, labels };
             }
 
-            // 提亮过暗颜色（涂色游戏核心步骤）
+            // 提亮过暗颜色（与原作一致）
             function brightenPaletteWithCluster(pixels, labels, centroids) {
                 const k = centroids.length;
                 const clusterPixels = new Array(k).fill().map(() => []);
@@ -586,12 +659,12 @@
                 });
             }
 
-            // 将网格绘制到canvas
-            function drawPixelated(grid, palette) {
+            // 将网格绘制到预览画布（每个格子1像素，保持界面小巧）
+            function drawPreview(grid, palette) {
                 const height = grid.length;
                 const width = grid[0].length;
-                resultCanvas.width = width * CELL_SIZE;
-                resultCanvas.height = height * CELL_SIZE;
+                resultCanvas.width = width * PREVIEW_CELL_SIZE;
+                resultCanvas.height = height * PREVIEW_CELL_SIZE;
                 ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
                 
                 for (let y = 0; y < height; y++) {
@@ -602,9 +675,33 @@
                         } else {
                             ctx.fillStyle = '#000';
                         }
-                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        ctx.fillRect(x * PREVIEW_CELL_SIZE, y * PREVIEW_CELL_SIZE, PREVIEW_CELL_SIZE, PREVIEW_CELL_SIZE);
                     }
                 }
+            }
+
+            // 生成高清保存图片（每个格子12像素）
+            function generateHighResImage(grid, palette) {
+                const height = grid.length;
+                const width = grid[0].length;
+                const canvas = document.createElement('canvas');
+                canvas.width = width * SAVE_CELL_SIZE;
+                canvas.height = height * SAVE_CELL_SIZE;
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false; // 保持像素感
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const colorIdx = grid[y][x];
+                        if (colorIdx >= 0 && colorIdx < palette.length) {
+                            ctx.fillStyle = palette[colorIdx].hex;
+                        } else {
+                            ctx.fillStyle = '#000';
+                        }
+                        ctx.fillRect(x * SAVE_CELL_SIZE, y * SAVE_CELL_SIZE, SAVE_CELL_SIZE, SAVE_CELL_SIZE);
+                    }
+                }
+                return canvas;
             }
 
             // ---------- 事件绑定 ----------
@@ -695,7 +792,7 @@
                         width: targetW,
                         height: targetH
                     };
-                    drawPixelated(result.grid, result.palette);
+                    drawPreview(result.grid, result.palette);
                     statusDiv.innerText = `完成！${targetW}x${targetH} · ${result.palette.length}色`;
                     saveBtn.disabled = false;
                 } catch (error) {
@@ -709,9 +806,10 @@
 
             saveBtn.addEventListener('click', () => {
                 if (!pixelatedGrid) return;
+                const highResCanvas = generateHighResImage(pixelatedGrid.grid, pixelatedGrid.palette);
                 const link = document.createElement('a');
                 link.download = `pixel_${pixelatedGrid.width}x${pixelatedGrid.height}_${pixelatedGrid.palette.length}colors.png`;
-                link.href = resultCanvas.toDataURL('image/png');
+                link.href = highResCanvas.toDataURL('image/png');
                 link.click();
             });
 
