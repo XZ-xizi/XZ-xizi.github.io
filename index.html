@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>像素涂色 · 移动端适配版</title>
+    <title>像素涂色 · 极速顺滑版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -301,7 +301,7 @@
             position: relative;
             background: #10161c;
             cursor: crosshair;
-            touch-action: none; /* 禁止浏览器默认手势 */
+            touch-action: none;
         }
         #game-canvas {
             display: block;
@@ -353,7 +353,7 @@
     <!-- 主页 -->
     <div id="home-screen">
         <div class="home-title">PIXEL·ART</div>
-        <div class="home-sub">移动端 · 双指缩放 · 长按涂色</div>
+        <div class="home-sub">极速版 · 顺滑缩放 · 无卡顿</div>
         <div class="home-buttons">
             <div class="home-btn" id="import-btn">🖼️ 导入图片</div>
             <div class="home-btn" id="home-settings-btn">⚙️ 设置</div>
@@ -389,7 +389,7 @@
                 <input type="number" id="grid-size-input" min="1" max="500" value="126" class="number-input">
             </div>
             <button class="settings-close" id="close-settings">完成</button>
-            <p style="font-size: 13px; opacity:0.7; text-align:center; margin-top:15px;">AI模式使用K-means聚类，自动提亮暗色；缩放时可预览原图轮廓</p>
+            <p style="font-size: 13px; opacity:0.7; text-align:center; margin-top:15px;">AI模式使用K-means聚类，自动提亮暗色；缩放范围自动适应</p>
         </div>
     </div>
 
@@ -435,7 +435,7 @@
         <div class="canvas-container" id="canvas-container">
             <canvas id="game-canvas" width="640" height="640"></canvas>
         </div>
-        <div class="info-text">双指缩放 | 单指拖动 | 单击/长按涂色</div>
+        <div class="info-text">滚轮/双指缩放（平滑） | 右键/单指拖动 | 单击/长按涂色</div>
     </div>
 
     <script>
@@ -461,6 +461,7 @@
             let gridWidth = 0, gridHeight = 0;
             let cellSize = 12;                // 基础格子大小（像素）
             let viewScale = 1.0;
+            let targetScale = 1.0;             // 目标缩放，用于平滑过渡
             let cellDrawSize = 12;             // 实际绘制格子大小（整数）
             let isDragging = false;            // 鼠标右键拖动状态
             let lastMouseX, lastMouseY;
@@ -478,6 +479,9 @@
             let isTouchMoving = false;
             let lastTouchX = 0, lastTouchY = 0;
             let initialPinchDistance = 0;
+
+            // 动画帧
+            let scaleAnimationFrame = null;
 
             // DOM 元素
             const homeScreen = document.getElementById('home-screen');
@@ -757,22 +761,27 @@
                 });
             }
 
-            // 绘制网格
+            // 绘制网格（性能优化版）
             function drawGrid() {
                 if (!imageLoaded) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
                 const showNumbers = cellDrawSize >= 8;
                 const showLines = cellDrawSize >= 4;
+                const palette = colorPalette; // 本地引用
                 
                 for (let y = 0; y < gridHeight; y++) {
+                    const rowOrig = originalGrid[y];
+                    const rowPaint = paintedGrid[y];
+                    const rowMistake = mistakeGrid[y];
+                    const rowBright = originalBrightness[y];
                     for (let x = 0; x < gridWidth; x++) {
-                        const origIdx = originalGrid[y][x];
-                        const paintedIdx = paintedGrid[y][x];
-                        const isMistake = mistakeGrid[y][x];
-                        const brightness = originalBrightness[y][x];
+                        const origIdx = rowOrig[x];
+                        const paintedIdx = rowPaint[x];
+                        const isMistake = rowMistake[x];
+                        const brightness = rowBright[x];
 
-                        if (origIdx < 0 || origIdx >= colorPalette.length) {
+                        if (origIdx < 0 || origIdx >= palette.length) {
                             console.error(`原始索引越界: (${x},${y}) origIdx=${origIdx}`);
                             ctx.fillStyle = '#ff00ff';
                             ctx.fillRect(x * cellDrawSize, y * cellDrawSize, cellDrawSize, cellDrawSize);
@@ -781,13 +790,13 @@
 
                         let fillColor;
                         if (paintedIdx !== -1) {
-                            if (paintedIdx < 0 || paintedIdx >= colorPalette.length) {
+                            if (paintedIdx < 0 || paintedIdx >= palette.length) {
                                 console.error(`涂色索引越界: (${x},${y}) paintedIdx=${paintedIdx}`);
                                 ctx.fillStyle = '#ff00ff';
                                 ctx.fillRect(x * cellDrawSize, y * cellDrawSize, cellDrawSize, cellDrawSize);
                                 continue;
                             }
-                            fillColor = colorPalette[paintedIdx].hex;
+                            fillColor = palette[paintedIdx].hex;
                         } else {
                             if (showNumbers && viewScale >= 0.8) {
                                 fillColor = UNPAINTED_BG_NEAR;
@@ -808,7 +817,7 @@
                             ctx.lineWidth = 1;
                             
                             if (x < gridWidth - 1) {
-                                const rightPainted = paintedGrid[y][x+1] !== -1;
+                                const rightPainted = rowPaint[x+1] !== -1;
                                 const leftPainted = paintedIdx !== -1;
                                 if (!(leftPainted && rightPainted)) {
                                     ctx.beginPath();
@@ -845,8 +854,9 @@
                 let total = gridWidth * gridHeight;
                 let colored = 0;
                 for (let y = 0; y < gridHeight; y++) {
+                    const row = paintedGrid[y];
                     for (let x = 0; x < gridWidth; x++) {
-                        if (paintedGrid[y][x] !== -1) colored++;
+                        if (row[x] !== -1) colored++;
                     }
                 }
                 const percent = total ? Math.round(colored/total * 100) : 0;
@@ -854,7 +864,7 @@
                 progressPercent.innerText = percent + '%';
             }
 
-            // 更新画布尺寸
+            // 更新画布尺寸（核心优化）
             function applyScale() {
                 const rawSize = cellSize * viewScale;
                 cellDrawSize = Math.max(1, Math.floor(rawSize));
@@ -865,17 +875,55 @@
                 drawGrid();
             }
 
-            // 平滑缩放（用于双指）
-            function handlePinchZoom(centerX, centerY, scaleDelta) {
-                const oldScale = viewScale;
-                viewScale = Math.min(4, Math.max(0.3, viewScale * scaleDelta));
-                const rect = canvas.getBoundingClientRect();
-                const canvasX = (centerX - rect.left) * (canvas.width / rect.width);
-                const canvasY = (centerY - rect.top) * (canvas.height / rect.height);
-                const ratio = viewScale / oldScale;
-                container.scrollLeft += canvasX * (ratio - 1);
-                container.scrollTop += canvasY * (ratio - 1);
-                applyScale();
+            // 平滑缩放过渡（使用 requestAnimationFrame）
+            function smoothScaleTo(target, centerX, centerY) {
+                if (scaleAnimationFrame) cancelAnimationFrame(scaleAnimationFrame);
+                
+                const startScale = viewScale;
+                const startTime = performance.now();
+                const duration = 150; // 毫秒
+                
+                function animate(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    // 缓动函数 easeOutCubic
+                    const t = 1 - Math.pow(1 - progress, 3);
+                    viewScale = startScale + (target - startScale) * t;
+                    
+                    // 计算鼠标对应的画布坐标，调整滚动条
+                    const rect = canvas.getBoundingClientRect();
+                    const canvasX = (centerX - rect.left) * (canvas.width / rect.width);
+                    const canvasY = (centerY - rect.top) * (canvas.height / rect.height);
+                    
+                    const ratio = viewScale / startScale;
+                    container.scrollLeft += canvasX * (ratio - 1);
+                    container.scrollTop += canvasY * (ratio - 1);
+                    
+                    applyScale();
+                    
+                    if (progress < 1) {
+                        scaleAnimationFrame = requestAnimationFrame(animate);
+                    } else {
+                        scaleAnimationFrame = null;
+                    }
+                }
+                
+                scaleAnimationFrame = requestAnimationFrame(animate);
+            }
+
+            // 处理缩放（统一入口）
+            function handleZoom(delta, clientX, clientY) {
+                const newScale = viewScale * delta;
+                // 动态计算最小缩放：确保图片完整可见
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                const minScaleW = containerWidth / (gridWidth * cellSize);
+                const minScaleH = containerHeight / (gridHeight * cellSize);
+                const minScale = Math.max(0.1, Math.min(minScaleW, minScaleH));
+                const maxScale = 8.0; // 最大8倍
+                const clampedScale = Math.min(maxScale, Math.max(minScale, newScale));
+                
+                smoothScaleTo(clampedScale, clientX, clientY);
             }
 
             // ---------- 涂色核心 ----------
@@ -1146,6 +1194,7 @@
                             imageLoaded = true;
 
                             viewScale = 1.0;
+                            targetScale = 1.0;
                             cellSize = 12;
                             applyScale();
                             updateCompletedColors();
@@ -1164,7 +1213,7 @@
                 reader.readAsDataURL(file);
             });
 
-            // ---------- 鼠标事件（保留PC支持） ----------
+            // ---------- 鼠标事件 ----------
             function getGridCoordFromEvent(clientX, clientY) {
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
@@ -1227,18 +1276,10 @@
             container.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                const rect = canvas.getBoundingClientRect();
-                const canvasX = (e.clientX - rect.left) * (canvas.width / rect.width);
-                const canvasY = (e.clientY - rect.top) * (canvas.height / rect.height);
-                const oldScale = viewScale;
-                viewScale = Math.min(4, Math.max(0.3, viewScale * delta));
-                const ratio = viewScale / oldScale;
-                container.scrollLeft += canvasX * (ratio - 1);
-                container.scrollTop += canvasY * (ratio - 1);
-                applyScale();
+                handleZoom(delta, e.clientX, e.clientY);
             });
 
-            // ---------- 触摸事件（移动端） ----------
+            // ---------- 触摸事件 ----------
             function getTouchGridCoord(touch) {
                 return getGridCoordFromEvent(touch.clientX, touch.clientY);
             }
@@ -1247,7 +1288,6 @@
                 e.preventDefault();
                 const touches = e.touches;
                 if (touches.length === 1) {
-                    // 单指：开始计时长按
                     const touch = touches[0];
                     touchStartX = touch.clientX;
                     touchStartY = touch.clientY;
@@ -1261,7 +1301,6 @@
                     if (longPressTimer) clearTimeout(longPressTimer);
                     longPressTimer = setTimeout(() => {
                         if (touchActive && !isTouchMoving) {
-                            // 触发长按涂色模式
                             isLongPressing = true;
                             const pos = getTouchGridCoord(touch);
                             if (pos) {
@@ -1272,11 +1311,9 @@
                         }
                     }, 300);
                 } else if (touches.length === 2) {
-                    // 双指：准备缩放
                     const dx = touches[0].clientX - touches[1].clientX;
                     const dy = touches[0].clientY - touches[1].clientY;
                     initialPinchDistance = Math.sqrt(dx*dx + dy*dy);
-                    // 取消单指相关状态
                     if (longPressTimer) clearTimeout(longPressTimer);
                     touchActive = false;
                     isLongPressing = false;
@@ -1298,13 +1335,11 @@
                             clearTimeout(longPressTimer);
                             longPressTimer = null;
                         }
-                        // 移动画布
                         container.scrollBy(-dx, -dy);
                         lastTouchX = touch.clientX;
                         lastTouchY = touch.clientY;
                     }
 
-                    // 如果处于长按涂色模式，移动时连续涂色
                     if (isLongPressing) {
                         const pos = getTouchGridCoord(touch);
                         if (pos) {
@@ -1314,16 +1349,14 @@
                         }
                     }
                 } else if (touches.length === 2) {
-                    // 双指缩放
                     const dx = touches[0].clientX - touches[1].clientX;
                     const dy = touches[0].clientY - touches[1].clientY;
                     const distance = Math.sqrt(dx*dx + dy*dy);
                     if (initialPinchDistance > 0) {
                         const scale = distance / initialPinchDistance;
-                        // 取两指中点
                         const centerX = (touches[0].clientX + touches[1].clientX) / 2;
                         const centerY = (touches[0].clientY + touches[1].clientY) / 2;
-                        handlePinchZoom(centerX, centerY, scale);
+                        handleZoom(scale, centerX, centerY);
                         initialPinchDistance = distance; // 增量式缩放
                     }
                 }
@@ -1333,9 +1366,7 @@
                 e.preventDefault();
                 const touches = e.touches;
                 if (touches.length === 0) {
-                    // 所有手指抬起
                     if (touchActive && !isTouchMoving && !isLongPressing && longPressTimer) {
-                        // 没有移动且没有触发长按，视为单击涂色
                         clearTimeout(longPressTimer);
                         const touch = e.changedTouches[0];
                         const pos = getTouchGridCoord(touch);
@@ -1352,7 +1383,6 @@
                         longPressTimer = null;
                     }
                 } else if (touches.length === 1) {
-                    // 从双指变为单指，重新初始化单指状态
                     touchActive = true;
                     isTouchMoving = false;
                     isLongPressing = false;
