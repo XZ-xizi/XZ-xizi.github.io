@@ -2,8 +2,8 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
-    <title>像素化工坊 · 源自涂色游戏 · 高清保存</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>像素化工坊 · 移动优化版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -18,60 +18,58 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 12px;
+            padding: 8px;
         }
         .container {
             background: rgba(255,255,255,0.1);
             backdrop-filter: blur(12px);
-            border-radius: 36px;
-            padding: 24px 20px;
+            border-radius: 28px;
+            padding: 20px 16px;
             box-shadow: 0 20px 40px -12px rgba(0,0,0,0.6);
             border: 1px solid rgba(255,255,255,0.2);
             width: 100%;
-            max-width: 800px;
+            max-width: 500px;
             color: white;
         }
         h1 {
             text-align: center;
-            font-size: 2rem;
-            margin: 0 0 8px 0;
+            font-size: 1.8rem;
+            margin: 0 0 4px 0;
             color: #ffd966;
         }
         .sub {
             text-align: center;
             opacity: 0.8;
-            margin-bottom: 20px;
-            font-size: 0.95rem;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
         }
         .upload-area {
             border: 2px dashed rgba(255,255,255,0.4);
-            border-radius: 30px;
-            padding: 30px 15px;
+            border-radius: 24px;
+            padding: 20px 10px;
             text-align: center;
             cursor: pointer;
             transition: 0.2s;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
-        .upload-area:hover {
-            border-color: #ffd966;
-            background: rgba(255,255,255,0.05);
+        .upload-area:active {
+            background: rgba(255,255,255,0.1);
         }
         .upload-area.dragover {
             border-color: #4caf50;
             background: rgba(76,175,80,0.1);
         }
         .preview-box {
-            margin: 20px 0;
+            margin: 16px 0;
             background: #1e2a36;
-            border-radius: 20px;
-            padding: 15px;
+            border-radius: 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         .canvas-wrapper {
             width: 100%;
-            overflow: hidden;
             background: #10161c;
             border-radius: 12px;
             cursor: pointer;
@@ -82,42 +80,42 @@
         #result-canvas {
             display: block;
             max-width: 100%;
-            max-height: 50vh;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
+            max-height: 40vh;
+            width: auto;
+            height: auto;
             background: #fff;
-            object-fit: contain;
+            border-radius: 4px;
         }
         .control-panel {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-top: 15px;
+            gap: 12px;
+            margin-top: 12px;
         }
         .control-row {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
         }
         .control-row label {
-            width: 120px;
-            font-size: 1rem;
+            width: 100px;
+            font-size: 0.95rem;
         }
         input[type="number"] {
             background: #2d3e4f;
             border: 1px solid #5f7a92;
             color: white;
-            padding: 10px 12px;
-            border-radius: 30px;
-            font-size: 1rem;
-            width: 140px;
+            padding: 8px 10px;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            width: 120px;
         }
         .toggle-switch {
-            width: 60px;
-            height: 30px;
+            width: 52px;
+            height: 26px;
             background: #555;
-            border-radius: 30px;
+            border-radius: 26px;
             position: relative;
             cursor: pointer;
             transition: 0.2s;
@@ -128,8 +126,8 @@
         .toggle-switch::after {
             content: '';
             position: absolute;
-            width: 26px;
-            height: 26px;
+            width: 22px;
+            height: 22px;
             background: white;
             border-radius: 50%;
             top: 2px;
@@ -137,65 +135,66 @@
             transition: 0.2s;
         }
         .toggle-switch.active::after {
-            left: 32px;
+            left: 28px;
         }
         button {
             background: #e67e22;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 40px;
-            font-size: 1.1rem;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
             border: 1px solid #f39c12;
-            min-width: 140px;
+            min-width: 120px;
+            touch-action: manipulation;
+        }
+        button:active {
+            transform: scale(0.96);
         }
         button:disabled {
             opacity: 0.5;
-            cursor: not-allowed;
+            pointer-events: none;
         }
         button.secondary {
             background: #2c3e50;
             border-color: #5f7a92;
         }
-        button.secondary:hover {
-            background: #3a4a5a;
-        }
         .button-group {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 10px;
+            margin-top: 8px;
         }
         .status {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.8;
             text-align: center;
-            margin-top: 12px;
+            margin-top: 10px;
         }
         .loading-spinner {
             display: inline-block;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
-            margin-left: 8px;
+            margin-left: 6px;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
         .hint {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             opacity: 0.6;
             margin-top: 5px;
             text-align: center;
         }
-        /* 图片放大预览弹窗（可拖拽） */
+        /* 图片放大预览弹窗（可拖拽缩放） */
         .modal {
             display: none;
             position: fixed;
@@ -204,7 +203,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.9);
+            background-color: rgba(0,0,0,0.95);
             overflow: hidden;
             touch-action: none;
         }
@@ -220,71 +219,72 @@
             cursor: grabbing;
         }
         #modal-image {
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
             transform-origin: 0 0;
             transition: none;
             will-change: transform;
             pointer-events: none;
             max-width: none;
             max-height: none;
+            background: #fff;
         }
         .close-modal {
             position: absolute;
-            top: 20px;
-            right: 35px;
+            top: 12px;
+            right: 20px;
             color: #f1f1f1;
-            font-size: 40px;
+            font-size: 32px;
             font-weight: bold;
             cursor: pointer;
             z-index: 1001;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .close-modal:hover,
-        .close-modal:focus {
-            color: #bbb;
-            text-decoration: none;
-            cursor: pointer;
+        .close-modal:active {
+            background: rgba(255,255,255,0.2);
         }
         .zoom-hint {
             position: absolute;
-            bottom: 20px;
+            bottom: 16px;
             left: 50%;
             transform: translateX(-50%);
             color: rgba(255,255,255,0.7);
             background: rgba(0,0,0,0.3);
-            padding: 5px 15px;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 12px;
             pointer-events: none;
         }
         .save-info {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #aaa;
-            margin-top: 5px;
+            margin-top: 4px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎨 像素化工坊</h1>
-        <div class="sub">源自涂色游戏 · 原汁原味 · 高清保存</div>
+        <div class="sub">移动优化 · 平滑渲染 · 快速响应</div>
 
-        <!-- 上传区域 -->
         <div class="upload-area" id="upload-area">
-            <p style="font-size: 1.2rem; margin:0;">📁 点击或拖拽图片</p>
-            <p style="opacity:0.7; margin:5px 0 0;">支持 JPG, PNG, WebP</p>
+            <p style="font-size: 1.1rem; margin:0;">📁 点击或拖拽图片</p>
+            <p style="opacity:0.7; margin:4px 0 0;">支持 JPG, PNG, WebP</p>
             <input type="file" id="file-input" accept="image/*" style="display: none;">
         </div>
 
-        <!-- 预览区 -->
         <div class="preview-box" id="preview-box" style="display: none;">
             <div class="canvas-wrapper" id="canvas-wrapper" title="点击放大预览">
                 <canvas id="result-canvas"></canvas>
             </div>
-            <div class="hint">点击图片进入预览，可拖拽查看各个角落</div>
+            <div class="hint">点击图片放大，可拖拽查看</div>
         </div>
 
-        <!-- 控制区 -->
         <div class="control-panel">
             <div class="control-row">
                 <label>📐 短边像素数</label>
@@ -297,32 +297,31 @@
             <div class="control-row">
                 <label>🤖 高质量</label>
                 <div class="toggle-switch" id="toggle-ai"></div>
-                <span style="opacity:0.7; font-size:0.9rem;">(更多迭代)</span>
+                <span style="opacity:0.7; font-size:0.8rem;">(更多迭代)</span>
             </div>
             <div class="button-group">
                 <button id="generate-btn" disabled>⚡ 生成</button>
-                <button id="save-btn" class="secondary" disabled>💾 保存高清图</button>
+                <button id="save-btn" class="secondary" disabled>💾 保存</button>
             </div>
             <div class="status" id="status">请上传图片</div>
-            <div class="save-info">保存为12倍放大版，每个格子12像素，清晰锐利</div>
+            <div class="save-info">预览为平滑效果，保存为高清柔边图</div>
         </div>
     </div>
 
-    <!-- 图片放大预览弹窗（可拖拽缩放） -->
     <div id="image-modal" class="modal">
         <span class="close-modal">&times;</span>
         <div class="modal-content" id="modal-content">
             <img id="modal-image" src="" alt="放大预览">
         </div>
-        <div class="zoom-hint">滚轮缩放 | 拖拽移动</div>
+        <div class="zoom-hint">双指缩放 | 拖拽移动</div>
     </div>
 
     <script>
         (function() {
             // ---------- 配置 ----------
-            const MIN_BRIGHTNESS = 150; // 涂色游戏用的提亮阈值
-            const SAVE_CELL_SIZE = 12;    // 保存时每个格子的大小（像素）
-            const PREVIEW_CELL_SIZE = 1;   // 预览时每个格子大小（通过CSS缩放，实际画布像素）
+            const MIN_BRIGHTNESS = 150;          // 提亮阈值
+            const SAVE_CELL_SIZE = 12;            // 保存时格子大小
+            const PREVIEW_SCALE = 4;               // 预览画布放大倍数（用于平滑渲染）
 
             // ---------- 状态 ----------
             let originalImage = null;
@@ -367,43 +366,41 @@
                 modalImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
             }
 
+            // 鼠标/触摸事件
             modalContent.addEventListener('mousedown', (e) => {
                 if (e.button !== 0) return;
+                e.preventDefault();
                 isDragging = true;
                 startX = e.clientX - translateX;
                 startY = e.clientY - translateY;
                 modalContent.style.cursor = 'grabbing';
-                e.preventDefault();
             });
-
             window.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
                 translateX = e.clientX - startX;
                 translateY = e.clientY - startY;
                 updateModalTransform();
             });
-
             window.addEventListener('mouseup', () => {
                 isDragging = false;
                 modalContent.style.cursor = 'grab';
             });
 
-            // 触摸事件
             modalContent.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
+                    e.preventDefault();
                     isDragging = true;
                     startX = e.touches[0].clientX - translateX;
                     startY = e.touches[0].clientY - translateY;
                     modalContent.style.cursor = 'grabbing';
-                    e.preventDefault();
                 }
             });
             modalContent.addEventListener('touchmove', (e) => {
                 if (!isDragging || e.touches.length !== 1) return;
+                e.preventDefault();
                 translateX = e.touches[0].clientX - startX;
                 translateY = e.touches[0].clientY - startY;
                 updateModalTransform();
-                e.preventDefault();
             });
             modalContent.addEventListener('touchend', () => {
                 isDragging = false;
@@ -462,7 +459,6 @@
             // 点击画布打开弹窗
             canvasWrapper.addEventListener('click', () => {
                 if (pixelatedGrid) {
-                    // 弹窗中显示的是预览画布的内容，也是1像素/格，但通过CSS放大，清晰度足够
                     modalImage.src = resultCanvas.toDataURL('image/png');
                     modal.style.display = 'block';
                     scale = 1;
@@ -486,7 +482,7 @@
                 return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
             }
 
-            // K-means++ 初始化（与原作一致）
+            // 以下为像素化算法（复制自涂色游戏）
             function initializeCentroids(pixels, k) {
                 const centroids = [];
                 centroids.push({...pixels[Math.floor(Math.random() * pixels.length)]});
@@ -518,19 +514,15 @@
                 return centroids;
             }
 
-            // K-means 聚类
             function kMeans(pixels, k, maxIterations = 30) {
                 if (pixels.length === 0) return { centroids: [], labels: [] };
-                
                 let centroids = initializeCentroids(pixels, k);
                 let labels = new Array(pixels.length).fill(0);
                 let changed = true;
                 let iter = 0;
-                
                 while (changed && iter < maxIterations) {
                     changed = false;
                     iter++;
-                    
                     for (let i = 0; i < pixels.length; i++) {
                         let minDist = Infinity;
                         let bestIdx = 0;
@@ -549,7 +541,6 @@
                             changed = true;
                         }
                     }
-                    
                     const sums = new Array(k).fill(0).map(() => ({r:0, g:0, b:0, count:0}));
                     for (let i = 0; i < pixels.length; i++) {
                         const label = labels[i];
@@ -558,7 +549,6 @@
                         sums[label].b += pixels[i].b;
                         sums[label].count++;
                     }
-                    
                     for (let j = 0; j < k; j++) {
                         if (sums[j].count > 0) {
                             centroids[j] = {
@@ -574,14 +564,12 @@
                 return { centroids, labels };
             }
 
-            // 提亮过暗颜色（与原作一致）
             function brightenPaletteWithCluster(pixels, labels, centroids) {
                 const k = centroids.length;
                 const clusterPixels = new Array(k).fill().map(() => []);
                 for (let i = 0; i < pixels.length; i++) {
                     clusterPixels[labels[i]].push(pixels[i]);
                 }
-                
                 for (let j = 0; j < k; j++) {
                     const brightness = centroids[j].r + centroids[j].g + centroids[j].b;
                     if (brightness < MIN_BRIGHTNESS && clusterPixels[j].length > 0) {
@@ -600,113 +588,104 @@
                 return centroids;
             }
 
-            // 像素化主函数（完全复制涂色游戏流程）
-            async function pixelateImage(imageData, width, height, targetColors, highQuality) {
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        const pixels = [];
-                        for (let i = 0; i < imageData.data.length; i += 4) {
-                            pixels.push({
-                                r: imageData.data[i],
-                                g: imageData.data[i+1],
-                                b: imageData.data[i+2]
-                            });
+            // 像素化主函数（同步执行，返回网格和调色板）
+            function pixelateImageSync(imageData, width, height, targetColors, highQuality) {
+                const pixels = [];
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    pixels.push({
+                        r: imageData.data[i],
+                        g: imageData.data[i+1],
+                        b: imageData.data[i+2]
+                    });
+                }
+                const maxIter = highQuality ? 50 : 30;
+                const { centroids, labels } = kMeans(pixels, targetColors, maxIter);
+                const brightCentroids = brightenPaletteWithCluster(pixels, labels, centroids);
+                const palette = brightCentroids.map(c => ({
+                    ...c,
+                    hex: rgbToHex(c.r, c.g, c.b)
+                }));
+                const newLabels = new Array(pixels.length);
+                for (let i = 0; i < pixels.length; i++) {
+                    let bestIdx = 0;
+                    let bestDist = Infinity;
+                    for (let j = 0; j < brightCentroids.length; j++) {
+                        const dr = pixels[i].r - brightCentroids[j].r;
+                        const dg = pixels[i].g - brightCentroids[j].g;
+                        const db = pixels[i].b - brightCentroids[j].b;
+                        const dist = dr*dr + dg*dg + db*db;
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestIdx = j;
                         }
-                        
-                        const maxIter = highQuality ? 50 : 30;
-                        const { centroids, labels } = kMeans(pixels, targetColors, maxIter);
-                        
-                        // 提亮过暗颜色
-                        const brightCentroids = brightenPaletteWithCluster(pixels, labels, centroids);
-                        
-                        // 构建调色板
-                        const palette = brightCentroids.map(c => ({
-                            ...c,
-                            hex: rgbToHex(c.r, c.g, c.b)
-                        }));
-
-                        // 重新分配标签（因为质心变了）
-                        const newLabels = new Array(pixels.length);
-                        for (let i = 0; i < pixels.length; i++) {
-                            let bestIdx = 0;
-                            let bestDist = Infinity;
-                            for (let j = 0; j < brightCentroids.length; j++) {
-                                const dr = pixels[i].r - brightCentroids[j].r;
-                                const dg = pixels[i].g - brightCentroids[j].g;
-                                const db = pixels[i].b - brightCentroids[j].b;
-                                const dist = dr*dr + dg*dg + db*db;
-                                if (dist < bestDist) {
-                                    bestDist = dist;
-                                    bestIdx = j;
-                                }
-                            }
-                            newLabels[i] = bestIdx;
-                        }
-
-                        // 构建网格
-                        const grid = [];
-                        let idx = 0;
-                        for (let y = 0; y < height; y++) {
-                            const row = [];
-                            for (let x = 0; x < width; x++) {
-                                row.push(newLabels[idx++]);
-                            }
-                            grid.push(row);
-                        }
-                        
-                        resolve({ grid, palette });
-                    }, 0);
-                });
+                    }
+                    newLabels[i] = bestIdx;
+                }
+                const grid = [];
+                let idx = 0;
+                for (let y = 0; y < height; y++) {
+                    const row = [];
+                    for (let x = 0; x < width; x++) {
+                        row.push(newLabels[idx++]);
+                    }
+                    grid.push(row);
+                }
+                return { grid, palette };
             }
 
-            // 将网格绘制到预览画布（每个格子1像素，保持界面小巧）
-            function drawPreview(grid, palette) {
+            // ---------- 绘制函数（统一平滑渲染）----------
+            function drawSmoothPreview(grid, palette) {
                 const height = grid.length;
                 const width = grid[0].length;
-                resultCanvas.width = width * PREVIEW_CELL_SIZE;
-                resultCanvas.height = height * PREVIEW_CELL_SIZE;
-                ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
-                
+                // 创建原始1px画布
+                const srcCanvas = document.createElement('canvas');
+                srcCanvas.width = width;
+                srcCanvas.height = height;
+                const srcCtx = srcCanvas.getContext('2d');
                 for (let y = 0; y < height; y++) {
                     for (let x = 0; x < width; x++) {
                         const colorIdx = grid[y][x];
-                        if (colorIdx >= 0 && colorIdx < palette.length) {
-                            ctx.fillStyle = palette[colorIdx].hex;
-                        } else {
-                            ctx.fillStyle = '#000';
-                        }
-                        ctx.fillRect(x * PREVIEW_CELL_SIZE, y * PREVIEW_CELL_SIZE, PREVIEW_CELL_SIZE, PREVIEW_CELL_SIZE);
+                        srcCtx.fillStyle = palette[colorIdx].hex;
+                        srcCtx.fillRect(x, y, 1, 1);
                     }
                 }
+                // 绘制到目标画布（放大 PREVIEW_SCALE 倍，平滑）
+                const previewWidth = width * PREVIEW_SCALE;
+                const previewHeight = height * PREVIEW_SCALE;
+                resultCanvas.width = previewWidth;
+                resultCanvas.height = previewHeight;
+                ctx.imageSmoothingEnabled = true; // 关键：平滑
+                ctx.drawImage(srcCanvas, 0, 0, previewWidth, previewHeight);
             }
 
-            // 生成高清保存图片（每个格子12像素）
-            function generateHighResImage(grid, palette) {
+            // 生成高清保存图片（平滑版本）
+            function generateHighResSmoothImage(grid, palette) {
                 const height = grid.length;
                 const width = grid[0].length;
-                const canvas = document.createElement('canvas');
-                canvas.width = width * SAVE_CELL_SIZE;
-                canvas.height = height * SAVE_CELL_SIZE;
-                const ctx = canvas.getContext('2d');
-                ctx.imageSmoothingEnabled = false; // 保持像素感
-                
+                // 原始1px画布
+                const srcCanvas = document.createElement('canvas');
+                srcCanvas.width = width;
+                srcCanvas.height = height;
+                const srcCtx = srcCanvas.getContext('2d');
                 for (let y = 0; y < height; y++) {
                     for (let x = 0; x < width; x++) {
                         const colorIdx = grid[y][x];
-                        if (colorIdx >= 0 && colorIdx < palette.length) {
-                            ctx.fillStyle = palette[colorIdx].hex;
-                        } else {
-                            ctx.fillStyle = '#000';
-                        }
-                        ctx.fillRect(x * SAVE_CELL_SIZE, y * SAVE_CELL_SIZE, SAVE_CELL_SIZE, SAVE_CELL_SIZE);
+                        srcCtx.fillStyle = palette[colorIdx].hex;
+                        srcCtx.fillRect(x, y, 1, 1);
                     }
                 }
-                return canvas;
+                // 放大到保存尺寸
+                const destCanvas = document.createElement('canvas');
+                destCanvas.width = width * SAVE_CELL_SIZE;
+                destCanvas.height = height * SAVE_CELL_SIZE;
+                const destCtx = destCanvas.getContext('2d');
+                destCtx.imageSmoothingEnabled = true; // 平滑
+                destCtx.drawImage(srcCanvas, 0, 0, destCanvas.width, destCanvas.height);
+                return destCanvas;
             }
 
             // ---------- 事件绑定 ----------
             uploadArea.addEventListener('click', () => fileInput.click());
-
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 uploadArea.classList.add('dragover');
@@ -748,7 +727,13 @@
                 reader.readAsDataURL(file);
             }
 
+            // 生成按钮节流
+            let lastClickTime = 0;
             generateBtn.addEventListener('click', async () => {
+                const now = Date.now();
+                if (now - lastClickTime < 1000) return; // 1秒内不能重复点击
+                lastClickTime = now;
+
                 if (!originalImage) {
                     statusDiv.innerText = '请先上传图片';
                     return;
@@ -767,52 +752,56 @@
                 saveBtn.disabled = true;
                 statusDiv.innerHTML = '正在像素化 <span class="loading-spinner"></span>';
 
-                let targetW, targetH;
-                const aspect = originalImage.width / originalImage.height;
-                if (aspect >= 1) {
-                    targetH = targetShort;
-                    targetW = Math.round(targetShort * aspect);
-                } else {
-                    targetW = targetShort;
-                    targetH = Math.round(targetShort / aspect);
-                }
+                // 使用 setTimeout 让出UI线程
+                setTimeout(() => {
+                    try {
+                        let targetW, targetH;
+                        const aspect = originalImage.width / originalImage.height;
+                        if (aspect >= 1) {
+                            targetH = targetShort;
+                            targetW = Math.round(targetShort * aspect);
+                        } else {
+                            targetW = targetShort;
+                            targetH = Math.round(targetShort / aspect);
+                        }
 
-                const offCanvas = document.createElement('canvas');
-                offCanvas.width = targetW;
-                offCanvas.height = targetH;
-                const offCtx = offCanvas.getContext('2d');
-                offCtx.drawImage(originalImage, 0, 0, targetW, targetH);
-                const imageData = offCtx.getImageData(0, 0, targetW, targetH);
+                        const offCanvas = document.createElement('canvas');
+                        offCanvas.width = targetW;
+                        offCanvas.height = targetH;
+                        const offCtx = offCanvas.getContext('2d');
+                        offCtx.drawImage(originalImage, 0, 0, targetW, targetH);
+                        const imageData = offCtx.getImageData(0, 0, targetW, targetH);
 
-                try {
-                    const result = await pixelateImage(imageData, targetW, targetH, targetColors, aiMode);
-                    pixelatedGrid = {
-                        grid: result.grid,
-                        palette: result.palette,
-                        width: targetW,
-                        height: targetH
-                    };
-                    drawPreview(result.grid, result.palette);
-                    statusDiv.innerText = `完成！${targetW}x${targetH} · ${result.palette.length}色`;
-                    saveBtn.disabled = false;
-                } catch (error) {
-                    console.error(error);
-                    statusDiv.innerText = '处理失败，请重试';
-                } finally {
-                    isProcessing = false;
-                    generateBtn.disabled = false;
-                }
+                        const result = pixelateImageSync(imageData, targetW, targetH, targetColors, aiMode);
+                        pixelatedGrid = {
+                            grid: result.grid,
+                            palette: result.palette,
+                            width: targetW,
+                            height: targetH
+                        };
+                        drawSmoothPreview(result.grid, result.palette);
+                        statusDiv.innerText = `完成！${targetW}x${targetH} · ${result.palette.length}色`;
+                        saveBtn.disabled = false;
+                    } catch (error) {
+                        console.error(error);
+                        statusDiv.innerText = '处理失败，请重试';
+                    } finally {
+                        isProcessing = false;
+                        generateBtn.disabled = false;
+                    }
+                }, 10);
             });
 
             saveBtn.addEventListener('click', () => {
                 if (!pixelatedGrid) return;
-                const highResCanvas = generateHighResImage(pixelatedGrid.grid, pixelatedGrid.palette);
+                const highResCanvas = generateHighResSmoothImage(pixelatedGrid.grid, pixelatedGrid.palette);
                 const link = document.createElement('a');
                 link.download = `pixel_${pixelatedGrid.width}x${pixelatedGrid.height}_${pixelatedGrid.palette.length}colors.png`;
                 link.href = highResCanvas.toDataURL('image/png');
                 link.click();
             });
 
+            // 输入范围限制
             colorCountInput.addEventListener('change', () => {
                 let val = parseInt(colorCountInput.value);
                 if (isNaN(val)) val = 32;
