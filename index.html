@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>像素化工坊 · 移动优化版</title>
+    <title>像素化工坊 · 移动优化 · 保存清晰版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -270,7 +270,7 @@
 <body>
     <div class="container">
         <h1>🎨 像素化工坊</h1>
-        <div class="sub">移动优化 · 平滑渲染 · 快速响应</div>
+        <div class="sub">移动优化 · 预览平滑 · 保存清晰</div>
 
         <div class="upload-area" id="upload-area">
             <p style="font-size: 1.1rem; margin:0;">📁 点击或拖拽图片</p>
@@ -304,7 +304,7 @@
                 <button id="save-btn" class="secondary" disabled>💾 保存</button>
             </div>
             <div class="status" id="status">请上传图片</div>
-            <div class="save-info">预览为平滑效果，保存为高清柔边图</div>
+            <div class="save-info">预览为平滑效果，保存为清晰像素块</div>
         </div>
     </div>
 
@@ -633,7 +633,7 @@
                 return { grid, palette };
             }
 
-            // ---------- 绘制函数（统一平滑渲染）----------
+            // ---------- 预览绘制（平滑）----------
             function drawSmoothPreview(grid, palette) {
                 const height = grid.length;
                 const width = grid[0].length;
@@ -654,33 +654,26 @@
                 const previewHeight = height * PREVIEW_SCALE;
                 resultCanvas.width = previewWidth;
                 resultCanvas.height = previewHeight;
-                ctx.imageSmoothingEnabled = true; // 关键：平滑
+                ctx.imageSmoothingEnabled = true; // 平滑
                 ctx.drawImage(srcCanvas, 0, 0, previewWidth, previewHeight);
             }
 
-            // 生成高清保存图片（平滑版本）
-            function generateHighResSmoothImage(grid, palette) {
+            // ---------- 保存绘制（硬边，清晰）----------
+            function generateHighResSharpImage(grid, palette) {
                 const height = grid.length;
                 const width = grid[0].length;
-                // 原始1px画布
-                const srcCanvas = document.createElement('canvas');
-                srcCanvas.width = width;
-                srcCanvas.height = height;
-                const srcCtx = srcCanvas.getContext('2d');
-                for (let y = 0; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        const colorIdx = grid[y][x];
-                        srcCtx.fillStyle = palette[colorIdx].hex;
-                        srcCtx.fillRect(x, y, 1, 1);
-                    }
-                }
-                // 放大到保存尺寸
                 const destCanvas = document.createElement('canvas');
                 destCanvas.width = width * SAVE_CELL_SIZE;
                 destCanvas.height = height * SAVE_CELL_SIZE;
                 const destCtx = destCanvas.getContext('2d');
-                destCtx.imageSmoothingEnabled = true; // 平滑
-                destCtx.drawImage(srcCanvas, 0, 0, destCanvas.width, destCanvas.height);
+                // 逐个格子绘制，不使用缩放，直接画矩形，确保边缘锐利
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const colorIdx = grid[y][x];
+                        destCtx.fillStyle = palette[colorIdx].hex;
+                        destCtx.fillRect(x * SAVE_CELL_SIZE, y * SAVE_CELL_SIZE, SAVE_CELL_SIZE, SAVE_CELL_SIZE);
+                    }
+                }
                 return destCanvas;
             }
 
@@ -794,7 +787,7 @@
 
             saveBtn.addEventListener('click', () => {
                 if (!pixelatedGrid) return;
-                const highResCanvas = generateHighResSmoothImage(pixelatedGrid.grid, pixelatedGrid.palette);
+                const highResCanvas = generateHighResSharpImage(pixelatedGrid.grid, pixelatedGrid.palette);
                 const link = document.createElement('a');
                 link.download = `pixel_${pixelatedGrid.width}x${pixelatedGrid.height}_${pixelatedGrid.palette.length}colors.png`;
                 link.href = highResCanvas.toDataURL('image/png');
